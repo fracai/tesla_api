@@ -92,6 +92,13 @@ class Energy:
         return await self._api_client.get(
             "energy_sites/{}/calendar_history".format(self._energy_site_id), params=params)
 
+    async def get_energy_site_history_data(self):
+        kind = 'backup'
+        params = {"kind": kind}
+        print ("energy_sites/{}/history".format(self._energy_site_id))
+        return await self._api_client.get(
+            "energy_sites/{}/history".format(self._energy_site_id), params=params)
+
     async def get_energy_site_live_status(self):
         return await self._api_client.get(
             "energy_sites/{}/live_status".format(self._energy_site_id))
