@@ -9,9 +9,11 @@ from .exceptions import ApiError, AuthenticationError, VehicleUnavailableError
 from .vehicle import Vehicle
 
 TESLA_API_BASE_URL = "https://owner-api.teslamotors.com/"
-TOKEN_URL = TESLA_API_BASE_URL + "oauth/token"
+TESLA_TOKEN_BASE_URL = "https://auth.tesla.com/"
+TOKEN_URL = TESLA_TOKEN_BASE_URL + "oauth2/v3/token"
 API_URL = TESLA_API_BASE_URL + "api/1"
 
+TOKEN_CLIENT_ID = "ownerapi"
 OAUTH_CLIENT_ID = "81527cff06843c8634fdc09e8ac0abefb46ac849f38fe1e431c2ef2106796384"
 OAUTH_CLIENT_SECRET = "c7257eb71a564034f9419ee651c7d0e5f7aa6bfbd18bafb5c5c033b093bb2fa3"
 
@@ -50,7 +52,7 @@ class TeslaApiClient:
 
     async def _get_token(self, data):
         request_data = {
-            "client_id": OAUTH_CLIENT_ID,
+            "client_id": TOKEN_CLIENT_ID,
             "client_secret": OAUTH_CLIENT_SECRET,
         }
         request_data.update(data)
@@ -60,6 +62,7 @@ class TeslaApiClient:
             if resp.status == 401:
                 raise AuthenticationError(response_json)
 
+        response_json['created_at'] = datetime.now().timestamp()
         # Send token to application via callback.
         if self._new_token_callback:
             asyncio.create_task(self._new_token_callback(json.dumps(response_json)))
@@ -71,7 +74,7 @@ class TeslaApiClient:
         return await self._get_token(data)
 
     async def _refresh_token(self, refresh_token):
-        data = {"grant_type": "refresh_token", "refresh_token": refresh_token}
+        data = {"grant_type": "refresh_token", "refresh_token": refresh_token, "scope": "openid email offline_access"}
         return await self._get_token(data)
 
     async def authenticate(self):
